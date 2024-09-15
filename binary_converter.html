@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decimal & Binary Converter</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #4b6cb7, #182848);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: #fff;
+    }
+
+    .container {
+      background-color: #2d3a54;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      width: 600px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h1 {
+      color: #ffffff;
+      margin-bottom: 30px;
+      font-size: 2.2em;
+      letter-spacing: 1px;
+    }
+
+    label {
+      font-size: 1.2em;
+      margin-top: 10px;
+      margin-bottom: 5px;
+      display: block;
+      text-align: left;
+      width: 100%;
+    }
+
+    input[type="text"], select, #result {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border: 2px solid #5e7bb9;
+      border-radius: 8px;
+      background-color: #1c2437;
+      color: #ffffff;
+      font-size: 1.4em;
+      outline: none;
+      transition: all 0.2s ease-in-out;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      box-sizing: border-box;
+      text-align: left;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: #82a4e1;
+    }
+
+    button {
+      padding: 15px 30px;
+      background-color: #5e7bb9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.4em;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background-color 0.3s ease;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #4b6cb7;
+    }
+
+    #result {
+      margin-top: 25px;
+      background-color: #1c2437;
+      border-radius: 8px;
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      width: 100%;
+      height: 200px; /* Increased height */
+      overflow-y: auto; /* Allow scrolling if result overflows */
+      box-sizing: border-box;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Decimal & Binary Converter</h1>
+  
+  <label>Select Input Type:</label>
+  <select id="inputType" onchange="switchInputType()">
+    <option value="decimal">Decimal</option>
+    <option value="binary">Binary</option>
+  </select>
+
+  <div id="decimalInputDiv">
+    <label for="decimalInput">Enter Decimal Number:</label>
+    <input type="text" id="decimalInput" placeholder="e.g. 42" onkeypress="checkEnter(event)">
+  </div>
+
+  <div id="binaryInputDiv" class="hidden">
+    <label for="binaryInput">Enter Binary Number:</label>
+    <input type="text" id="binaryInput" placeholder="e.g. 101010" onkeypress="checkEnter(event)">
+  </div>
+
+  <button onclick="convert()">Convert</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+  function switchInputType() {
+    const inputType = document.getElementById("inputType").value;
+    const decimalInputDiv = document.getElementById("decimalInputDiv");
+    const binaryInputDiv = document.getElementById("binaryInputDiv");
+
+    if (inputType === "decimal") {
+      decimalInputDiv.classList.remove("hidden");
+      binaryInputDiv.classList.add("hidden");
+    } else {
+      decimalInputDiv.classList.add("hidden");
+      binaryInputDiv.classList.remove("hidden");
+    }
+    document.getElementById("result").innerHTML = "";
+  }
+
+  function checkEnter(event) {
+    if (event.key === "Enter") {
+      convert();
+    }
+  }
+
+  function convert() {
+    const inputType = document.getElementById("inputType").value;
+    let result = document.getElementById("result");
+
+    if (inputType === "decimal") {
+      let decimalNumber = parseInt(document.getElementById("decimalInput").value);
+      if (isNaN(decimalNumber)) {
+        result.innerHTML = "Please enter a valid decimal number!";
+        return;
+      }
+      let binaryNumber = convertDecimalToBinary(decimalNumber);
+      result.innerHTML = "Binary: " + binaryNumber;
+    } else {
+      let binaryInput = document.getElementById("binaryInput").value;
+      if (!/^[01]+$/.test(binaryInput)) {
+        result.innerHTML = "Please enter a valid binary number!";
+        return;
+      }
+      let unsignedValue = parseInt(binaryInput, 2);
+      let signedValue = calculateSignedValue(binaryInput);
+      result.innerHTML = "Unsigned: " + unsignedValue + "<br>Signed: " + signedValue;
+    }
+  }
+
+  function convertDecimalToBinary(decimalNumber) {
+    let binaryNumber = [];
+    let absDecimal = Math.abs(decimalNumber);
+    let numberOfBinaryDigits = 0;
+
+    let x = 1;
+    while (x < (absDecimal + 1)) {
+      x *= 2;
+      numberOfBinaryDigits++;
+    }
+
+    if (absDecimal === 0) {
+      numberOfBinaryDigits = 1;
+    }
+
+    let value = absDecimal;
+    let count = numberOfBinaryDigits;
+
+    while (count > 0) {
+      if (2 ** (count - 1) <= value) {
+        binaryNumber.push(1);
+        value -= 2 ** (count - 1);
+      } else {
+        binaryNumber.push(0);
+      }
+      count--;
+    }
+
+    if (decimalNumber < 0) {
+      binaryNumber = applyTwoComplement(binaryNumber);
+    }
+
+    while (binaryNumber.length < 16) {
+      binaryNumber.unshift(decimalNumber < 0 ? 1 : 0);
+    }
+
+    return binaryNumber.join('');
+  }
+
+  function applyTwoComplement(binaryNumber) {
+    let complementStarted = false;
+    for (let i = binaryNumber.length - 1; i >= 0; i--) {
+      if (complementStarted) {
+        binaryNumber[i] = binaryNumber[i] === 1 ? 0 : 1;
+      }
+      if (binaryNumber[i] === 1) {
+        complementStarted = true;
+      }
+    }
+    return binaryNumber;
+  }
+
+  function calculateSignedValue(binaryInput) {
+    const isNegative = binaryInput[0] === '1';
+    if (isNegative) {
+      const invertedBinary = invertBinary(binaryInput);
+      return -1 * (parseInt(invertedBinary, 2) + 1);
+    } else {
+      return parseInt(binaryInput, 2);
+    }
+  }
+
+  function invertBinary(binary) {
+    return binary.split('').map(bit => bit === '1' ? '0' : '1').join('');
+  }
+</script>
+
+</body>
+</html>
